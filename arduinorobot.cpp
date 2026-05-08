@@ -44,7 +44,7 @@ int calibrated_left_pwm = 200;
 int calibrated_right_pwm = 200;
 
 int calibrateLeft(int speed) {
-  return map(speed, 0, 255, 0, 245);
+  return map(speed, 0, 255, 0, 220);
 }
 
 int calibrateRight(int speed) {
@@ -75,19 +75,136 @@ void moveForward(int speed, int time) {
   analogWrite(MTB2, LOW);
 }
 
+void turnRight(int speed, int time){
+  calibrated_left_pwm = calibrateLeft(speed);
+  calibrated_right_pwm = calibrateRight(speed);
+
+
+
+  // move forward
+  //A1 A2 control one motor B1 B2 controll other (and need to be flipped to be equivalent)
+  //A is right wheel B is left wheel
+  analogWrite(MTA1, LOW);  
+  analogWrite(MTB1, LOW);
+  analogWrite(MTA2, LOW);  
+  analogWrite(MTB2, calibrated_left_pwm);
+
+  delay(time);
+
+  //stop
+  analogWrite(MTA1, LOW);  
+  analogWrite(MTB1, LOW);
+  analogWrite(MTA2, LOW); 
+  analogWrite(MTB2, LOW);
+}
+
+void turnLeft(int speed, int time){
+  calibrated_left_pwm = calibrateLeft(speed);
+  calibrated_right_pwm = calibrateRight(speed);
+
+
+
+  // move forward
+  //A1 A2 control one motor B1 B2 controll other (and need to be flipped to be equivalent)
+  //A is right wheel B is left wheel
+  analogWrite(MTA1, calibrated_right_pwm);  
+  analogWrite(MTB1, LOW);
+  analogWrite(MTA2, LOW);  
+  analogWrite(MTB2, LOW);
+
+  delay(time);
+
+  //stop
+  analogWrite(MTA1, LOW);  
+  analogWrite(MTB1, LOW);
+  analogWrite(MTA2, LOW); 
+  analogWrite(MTB2, LOW);
+}
+
+
+void right90(){
+  turnRight(100, 1070);
+}
+
+void left90(){
+  turnLeft(100, 1070);
+}
+
+
 void executeTask1(){
   if(!hasRun){
-    moveForward(250, 5000);
+    moveForward(250, 7500);
   }
   hasRun = true;
 }
 
 void executeTask2(){
-  
+  if(!hasRun){
+    // right90();
+    // delay(2000);
+    // left90();
+
+    
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+  }
+  hasRun = true;
 }
 
 void executeTask3(){
-  
+  if(!hasRun){
+    // right90();
+    // delay(2000);
+    // left90();
+
+    
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    right90();
+    delay(2000);
+    moveForward(250, 4000);
+
+    delay(2000);
+    left90();
+    delay(1000);
+    left90();
+    delay(2000);
+
+    moveForward(250, 4000);
+    delay(2000);
+    left90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    left90();
+    delay(2000);
+    moveForward(250, 4000);
+    delay(2000);
+    left90();
+    delay(2000);
+    moveForward(250, 4000);
+
+  }
+  hasRun = true;
 }
 
 void executeTask4(){
@@ -230,6 +347,15 @@ void loop() {
     switch(state){
       case 1:
         executeTask1();
+        break;
+      case 2:
+        executeTask2();
+        break;
+      case 3:
+        executeTask3();
+        break;
+      case 4:
+        executeTask4();
         break;
     }
   }
