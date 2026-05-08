@@ -26,6 +26,8 @@
 #define ENC_LEFT_B D11
 #define ENC_RIGHT_A D12
 #define ENC_RIGHT_B D13
+#define LINE_SENSOR D2
+
 
 
 const char* ssid = "WIN_304429";
@@ -316,8 +318,8 @@ void executeTask3(){
 void executeTask4(){ //follow line via infared
   if(!hasRun){
     int lapTime = 10000;
-    for(int i = 0; i < lapTime; i++){
-      int seeLine = digitalRead(sensorPin);
+    for(int i = 0; i < lapTime; i++){ 
+      int seeLine = digitalRead(LINE_SENSOR);
       if (seeLine == LOW) { //line detected
         analogWrite(MTA1, 250);  //turn left
         analogWrite(MTB1, LOW);
@@ -340,7 +342,17 @@ void executeTask5(){
 }
 
 void executeTask6(){ //draw a letter
+  while(true){
+    Serial.print("Digital: ");
+    Serial.print(digitalRead(2));
 
+    Serial.print("   Analog: ");
+    Serial.println(analogRead(A0));
+
+    Serial.println();
+
+    delay(200);
+  }
 }
 
 void setup() {
@@ -352,6 +364,8 @@ void setup() {
   pinMode(MTA2, OUTPUT);
   pinMode(MTB1, OUTPUT);
   pinMode(MTB2, OUTPUT);
+  pinMode(LINE_SENSOR, INPUT); //why is this not a change
+
 
   start = false;
   state = 0;
