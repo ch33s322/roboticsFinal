@@ -128,6 +128,7 @@ while running:
         print("\nReceive:")
         print(json.dumps(response, indent=4))
 
+        #if update recieved, update map
         if(response["type"] == "update"):
             updateRobotPos(response["data"]["dx"], response["data"]["dy"])
             drawGrid()
