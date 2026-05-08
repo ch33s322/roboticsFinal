@@ -4,7 +4,49 @@ import socket
 import json
 import time
 import uuid
+import os
+import queue
+import threading
 
+width = 20
+height = 10
+
+empty = " . "
+path = " * "
+robot = " @ "
+
+robotX = 0
+robotY = 0
+
+
+
+visited = {(robotX, robotY)}
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
+
+def updateRobotPos(x, y):
+    global robotX, robotY
+    robotX += x
+    robotY += y
+    visited.add((robotX, robotY))
+
+def drawGrid():
+    #clear()
+    global robotX, robotY, empty, path, robot, width, height
+    for row in range(height):
+        
+        line = ""
+
+        for col in range(width):
+            if (col, row) == (robotX, robotY):
+                line += robot
+            elif (col, row) in visited:
+                line += path
+            else:
+                line += empty
+
+        print(line)
 
 class message:
     def __init__(self, version, msgType, command, params, data):
@@ -33,68 +75,67 @@ PORT = 4210
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(2)
 
-while True:
-    command = input(">>> ").strip().lower()
+command_queue = queue.Queue()
 
-    if command == "exit":
-        print("Goodbye!")
-        break
+def input_thread():
+    while True:
+        cmd = input(">>> ").strip().lower()
+        command_queue.put(cmd)
 
-    elif command == "task1":
-            m = message("1.0", "command", "task1", "", "")
-            
-            # Send message
-            print("Sending: task1")
-            sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
+# Start input thread
+threading.Thread(target=input_thread, daemon=True).start()
 
-        
+running = True
+while running:
+    while not command_queue.empty():
+        command = command_queue.get()
 
-    elif command == ("task2"):
-        m = message("1.0", "command", "task2", "", "")
-            
-        # Send message
-        print("Sending: task2")
-        sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
-    elif command == ("task3"):
-        m = message("1.0", "command", "task3", "", "")
-            
-        # Send message
-        print("Sending: task3")
-        sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
-    elif command == ("task4"):
-        m = message("1.0", "command", "task4", "", "")
-            
-        # Send message
-        print("Sending: task4")
-        sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
-    
-    elif command == ("start"):
-        m = message("1.0", "command", "start", "", "")
-            
-        # Send message
-        print("Sending: start")
-        sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
+        if command == "exit":
+            print("Goodbye!")
+            running = False
+            break
 
-    elif command == ("stop"):
-        m = message("1.0", "command", "stop", "", "")
-            
-        # Send message
-        print("Sending: stop")
-        sock.sendto(json.dumps(JSONMessage(m)).encode(), (ROBOT_IP, PORT))
+        elif command in ["task1", "task2", "task3", "task4", "task5", "task6", "start", "stop"]:
 
-    elif command == "":
-        continue  # ignore empty input
+            if(command == "stop"):
+                visited.clear()
+                robotX = 1
+                robotY = 1
 
-    else:
-        print("Unknown command:", command)
+            m = message("1.0", "command", command, "", "")
 
-    #receive 
+            print(f"Sending: {command}")
+
+            sock.sendto(
+                json.dumps(JSONMessage(m)).encode(),
+                (ROBOT_IP, PORT)
+            )
+
+        elif command == "":
+            continue
+
+        else:
+            print("Unknown command:", command)
+
+    # -------------------------
+    # NON-BLOCKING RECEIVE
+    # -------------------------
     try:
         data, _ = sock.recvfrom(1024)
+
         response = json.loads(data.decode())
 
-        print("Receive:")
+        print("\nReceive:")
         print(json.dumps(response, indent=4))
 
+        if(response["type"] == "update"):
+            updateRobotPos(response["data"]["dx"], response["data"]["dy"])
+            drawGrid()
+        
+        
+
     except socket.timeout:
-        print("No response from robot")
+        pass
+
+    # Prevent 100% CPU usage
+    time.sleep(0.01)

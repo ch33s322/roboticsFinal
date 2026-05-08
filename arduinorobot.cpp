@@ -43,6 +43,31 @@ int state;
 int calibrated_left_pwm = 200;
 int calibrated_right_pwm = 200;
 
+void sendPosUpdate(int dx, int dy, int id){
+  // Prepare response JSON
+    StaticJsonDocument<512> update;
+
+    update["version"] = "1.0";
+    update["msg_id"] = id;
+    update["type"] = "update";
+    update["status"] = "pos update";
+    update["error"] = nullptr;
+
+    JsonObject data = update.createNestedObject("data");
+
+    data["dx"] = dx;
+    data["dy"] = dy;
+
+    // Serialize JSON
+    char buffer[512];
+    size_t n = serializeJson(update, buffer);
+
+    // Send response
+    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+    udp.write((uint8_t*)buffer, n);
+    udp.endPacket();
+}
+
 int calibrateLeft(int speed) {
   return map(speed, 0, 255, 0, 220);
 }
@@ -134,6 +159,14 @@ void left90(){
 void executeTask1(){
   if(!hasRun){
     moveForward(250, 7500);
+    sendPosUpdate(1,1,1);
+    sendPosUpdate(1,1,2);
+    sendPosUpdate(1,1,3);
+    sendPosUpdate(1,1,4);
+    sendPosUpdate(1,1,5);
+    sendPosUpdate(1,1,6);
+    sendPosUpdate(1,1,7);
+    sendPosUpdate(1,1,8);
   }
   hasRun = true;
 }
@@ -146,18 +179,43 @@ void executeTask2(){
 
     
     moveForward(250, 4000);
+    sendPosUpdate(1,0,1);
+    sendPosUpdate(1,0,2);
+    sendPosUpdate(1,0,3);
+    sendPosUpdate(1,0,4);
+    sendPosUpdate(1,0,5);
+    sendPosUpdate(1,0,6);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(0,1,7);
+    sendPosUpdate(0,1,8);
+    sendPosUpdate(0,1,9);
+    sendPosUpdate(0,1,10);
+    sendPosUpdate(0,1,11);
+    sendPosUpdate(0,1,12);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(-1,0,13);
+    sendPosUpdate(-1,0,14);
+    sendPosUpdate(-1,0,15);
+    sendPosUpdate(-1,0,16);
+    sendPosUpdate(-1,0,17);
+    sendPosUpdate(-1,0,18);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(0,-1,19);
+    sendPosUpdate(0,-1,20);
+    sendPosUpdate(0,-1,21);
+    sendPosUpdate(0,-1,22);
+    sendPosUpdate(0,-1,23);
+    sendPosUpdate(0,-1,24);
+    
   }
   hasRun = true;
 }
@@ -170,18 +228,42 @@ void executeTask3(){
 
     
     moveForward(250, 4000);
+    sendPosUpdate(1,0,1);
+    sendPosUpdate(1,0,2);
+    sendPosUpdate(1,0,3);
+    sendPosUpdate(1,0,4);
+    sendPosUpdate(1,0,5);
+    sendPosUpdate(1,0,6);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(0,1,7);
+    sendPosUpdate(0,1,8);
+    sendPosUpdate(0,1,9);
+    sendPosUpdate(0,1,10);
+    sendPosUpdate(0,1,11);
+    sendPosUpdate(0,1,12);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(-1,0,13);
+    sendPosUpdate(-1,0,14);
+    sendPosUpdate(-1,0,15);
+    sendPosUpdate(-1,0,16);
+    sendPosUpdate(-1,0,17);
+    sendPosUpdate(-1,0,18);
     delay(2000);
     right90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(0,-1,19);
+    sendPosUpdate(0,-1,20);
+    sendPosUpdate(0,-1,21);
+    sendPosUpdate(0,-1,22);
+    sendPosUpdate(0,-1,23);
+    sendPosUpdate(0,-1,24);
 
     delay(2000);
     left90();
@@ -190,27 +272,76 @@ void executeTask3(){
     delay(2000);
 
     moveForward(250, 4000);
+    sendPosUpdate(0,1,25);
+    sendPosUpdate(0,1,26);
+    sendPosUpdate(0,1,27);
+    sendPosUpdate(0,1,28);
+    sendPosUpdate(0,1,29);
+    sendPosUpdate(0,1,30);
     delay(2000);
     left90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(1,0,31);
+    sendPosUpdate(1,0,32);
+    sendPosUpdate(1,0,33);
+    sendPosUpdate(1,0,34);
+    sendPosUpdate(1,0,35);
+    sendPosUpdate(1,0,36);
     delay(2000);
     left90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(0,-1,37);
+    sendPosUpdate(0,-1,38);
+    sendPosUpdate(0,-1,39);
+    sendPosUpdate(0,-1,40);
+    sendPosUpdate(0,-1,41);
+    sendPosUpdate(0,-1,42);
     delay(2000);
     left90();
     delay(2000);
     moveForward(250, 4000);
+    sendPosUpdate(-1,0,43);
+    sendPosUpdate(-1,0,44);
+    sendPosUpdate(-1,0,45);
+    sendPosUpdate(-1,0,46);
+    sendPosUpdate(-1,0,47);
+    sendPosUpdate(-1,0,48);
 
   }
   hasRun = true;
 }
 
-void executeTask4(){
-  
+void executeTask4(){ //follow line via infared
+  if(!hasRun){
+    int lapTime = 10000;
+    for(int i = 0; i < lapTime; i++){
+      int seeLine = digitalRead(sensorPin);
+      if (seeLine == LOW) { //line detected
+        analogWrite(MTA1, 250);  //turn left
+        analogWrite(MTB1, LOW);
+        analogWrite(MTA2, LOW);  
+        analogWrite(MTB2, LOW);
+      } else { //no line
+        analogWrite(MTA1, LOW);  
+        analogWrite(MTB1, LOW);
+        analogWrite(MTA2, LOW);  
+        analogWrite(MTB2, 250);
+      }
+      delay(1);
+    }
+  }
+  hasRun = true;
 }
 
+void executeTask5(){
+  executeTask2();
+}
+
+void executeTask6(){ //draw a letter
+
+}
 
 void setup() {
 
@@ -299,6 +430,20 @@ void loop() {
         response["type"] = "response";
         response["status"] = "task4 set";
         response["error"] = nullptr;
+    } else if (strcmp(command, "task5") == 0){
+        state = 5;
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "task5 set";
+        response["error"] = nullptr;
+    } else if (strcmp(command, "task6") == 0){
+        state = 6;
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "task6 set";
+        response["error"] = nullptr;
     } else if (strcmp(command, "start") == 0) {
         start = true;
         response["version"] = "1.0";
@@ -356,6 +501,12 @@ void loop() {
         break;
       case 4:
         executeTask4();
+        break;
+      case 5:
+        executeTask5();
+        break;
+      case 6:
+        executeTask6();
         break;
     }
   }
