@@ -8,8 +8,8 @@ import os
 import queue
 import threading
 
-width = 20
-height = 10
+width = 40
+height = 40
 
 empty = " . "
 path = " * "

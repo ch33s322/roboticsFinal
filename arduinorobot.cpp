@@ -26,7 +26,7 @@
 #define ENC_LEFT_B D11
 #define ENC_RIGHT_A D12
 #define ENC_RIGHT_B D13
-#define LINE_SENSOR D2
+#define LINE_SENSOR A1
 
 
 
@@ -41,6 +41,7 @@ char incomingPacket[512];
 bool hasRun;
 bool start;
 int state;
+int threshold;
 
 int calibrated_left_pwm = 200;
 int calibrated_right_pwm = 200;
@@ -317,37 +318,83 @@ void executeTask3(){
 
 void executeTask4(){ //follow line via infared
   if(!hasRun){
-    int lapTime = 10000;
+    int lapTime = 4350;
     for(int i = 0; i < lapTime; i++){ 
-      int seeLine = digitalRead(LINE_SENSOR);
-      if (seeLine == LOW) { //line detected
-        analogWrite(MTA1, 250);  //turn left
+      int seeLine = analogRead(LINE_SENSOR);
+      if (seeLine < threshold) { //line detected
+        analogWrite(MTA1, LOW);  //turn left
         analogWrite(MTB1, LOW);
-        analogWrite(MTA2, LOW);  
+        analogWrite(MTA2, 100);  
         analogWrite(MTB2, LOW);
       } else { //no line
         analogWrite(MTA1, LOW);  
-        analogWrite(MTB1, LOW);
+        analogWrite(MTB1, 100);
         analogWrite(MTA2, LOW);  
-        analogWrite(MTB2, 250);
+        analogWrite(MTB2, LOW);
       }
-      delay(1);
+      delay(10);
     }
+    analogWrite(MTA1, LOW);  
+    analogWrite(MTB1, LOW);
+    analogWrite(MTA2, LOW);  
+    analogWrite(MTB2, LOW);
   }
   hasRun = true;
 }
 
 void executeTask5(){
-  executeTask2();
+  if(!hasRun){
+    int lapTime = 4350;
+    for(int i = 0; i < lapTime; i++){ 
+      int seeLine = analogRead(LINE_SENSOR);
+      if (seeLine < threshold) { //line detected
+        analogWrite(MTA1, LOW);  //turn left
+        analogWrite(MTB1, LOW);
+        analogWrite(MTA2, 100);  
+        analogWrite(MTB2, LOW);
+      } else { //no line
+        analogWrite(MTA1, LOW);  
+        analogWrite(MTB1, 100);
+        analogWrite(MTA2, LOW);  
+        analogWrite(MTB2, LOW);
+      }
+      if(i < 4400 && i >= 3300 && i%100 == 0){
+        sendPosUpdate(0,-1,i);
+      }else if(i < 3300 && i >= 2200 && i%100 == 0){
+        sendPosUpdate(-1,0,i);
+      }else if(i < 2200 && i >= 1100 && i%100 == 0){
+        sendPosUpdate(0,1,i);
+      }else if(i < 1100 && i%100 == 0){
+        sendPosUpdate(1,0,i);
+      }
+      delay(10);
+    }
+    analogWrite(MTA1, LOW);  
+    analogWrite(MTB1, LOW);
+    analogWrite(MTA2, LOW);  
+    analogWrite(MTB2, LOW);
+  }
+  hasRun = true;
 }
 
 void executeTask6(){ //draw a letter
-  while(true){
-    Serial.print("Digital: ");
-    Serial.print(digitalRead(2));
+  
+}
 
-    Serial.print("   Analog: ");
+void testIRSensor(){
+  while(true){
+    
+    Serial.print("a0: ");
     Serial.println(analogRead(A0));
+    Serial.print(" ");
+    Serial.print("a1: ");
+    Serial.println(analogRead(A1));
+    Serial.print(" ");
+    Serial.print("a2: ");
+    Serial.println(analogRead(A2));
+    Serial.print(" ");
+    Serial.print("a3: ");
+    Serial.println(analogRead(A3));
 
     Serial.println();
 
@@ -366,10 +413,18 @@ void setup() {
   pinMode(MTB2, OUTPUT);
   pinMode(LINE_SENSOR, INPUT); //why is this not a change
 
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+
+
+
 
   start = false;
   state = 0;
   hasRun = false;
+  threshold = 4000;
 
   Serial.begin(115200);
 
@@ -521,6 +576,9 @@ void loop() {
         break;
       case 6:
         executeTask6();
+        break;
+      case 10:
+        testIRSensor();
         break;
     }
   }
