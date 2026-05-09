@@ -9,6 +9,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Arduino.h>
 #include <Wire.h>
+#include <IPAddress.h>
 
 
 #define SCREEN_WIDTH 128
@@ -30,8 +31,8 @@
 
 
 
-const char* ssid = "WIN_304429";
-const char* password = "sp6zxbhvqb";
+const char* ssid = "MSB155";
+const char* password = "Robot$155";
 
 WiFiUDP udp;
 const int localPort = 4210;
@@ -42,9 +43,12 @@ bool hasRun;
 bool start;
 int state;
 int threshold;
+int direction;
 
 int calibrated_left_pwm = 200;
 int calibrated_right_pwm = 200;
+
+IPAddress ip; 
 
 void sendPosUpdate(int dx, int dy, int id){
   // Prepare response JSON
@@ -151,11 +155,11 @@ void turnLeft(int speed, int time){
 
 
 void right90(){
-  turnRight(100, 1070);
+  turnRight(100, 1170);
 }
 
 void left90(){
-  turnLeft(100, 1070);
+  turnLeft(100, 1100);
 }
 
 
@@ -402,6 +406,46 @@ void testIRSensor(){
   }
 }
 
+void manualModeSendPos(int dir, int dist){
+  switch(dir){
+    case 1: //right on graph
+      sendPosUpdate(dist, 0, -1);
+      break;
+    case 2: //down right on graph
+      sendPosUpdate(dist, dist, -1);
+      break;
+    case 3: //down on graph
+      sendPosUpdate(0, dist, -1);
+      break;
+    case 4: //down left on graph
+      sendPosUpdate(-dist, dist, -1);
+      break;
+    case 5: //left on graph
+      sendPosUpdate(-dist, 0, -1);
+      break;
+    case 6: //upl eft on graph
+      sendPosUpdate(-dist, -dist, -1);
+      break;
+    case 7: //up on graph
+      sendPosUpdate(0, -dist, -1);
+      break;
+    case 8: //up right on graph
+      sendPosUpdate(dist, -dist, -1);
+      break;
+  }
+}
+
+void updateDir(int delta){
+  direction += delta;
+
+  if(direction > 8){
+    direction = 1;
+  }
+  if(direction < 1){
+    direction = 8;
+  }
+}
+
 void setup() {
 
   Wire.begin(SDA_PIN, SCL_PIN);
@@ -426,6 +470,8 @@ void setup() {
   hasRun = false;
   threshold = 4000;
 
+  direction = 1;
+
   Serial.begin(115200);
 
   WiFi.begin(ssid, password);
@@ -445,6 +491,10 @@ void setup() {
 }
 
 void loop() {
+
+  ip = WiFi.localIP();
+  Serial.print(ip);
+
   int packetSize = udp.parsePacket();
   if (packetSize) { //this if loop handles json comunication
     int len = udp.read(incomingPacket, 511);
@@ -523,10 +573,54 @@ void loop() {
     } else if (strcmp(command, "stop") == 0) {
         start = false;
         hasRun = false;
+        direction = 1;
         response["version"] = "1.0";
         response["msg_id"] = msg_id;
         response["type"] = "response";
         response["status"] = "stopping task";
+        response["error"] = nullptr;
+    } else if (strcmp(command, "w") == 0) {
+        state = 0;
+        start = false;
+        hasRun = false;
+        moveForward(250, 500);
+        manualModeSendPos(direction, 1);
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "w";
+        response["error"] = nullptr;
+    } else if (strcmp(command, "s") == 0) {
+        state = 0;
+        start = false;
+        hasRun = false;
+        manualModeSendPos(direction, -1);
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "s";
+        response["error"] = nullptr;
+    } else if (strcmp(command, "a") == 0) {
+        state = 0;
+        start = false;
+        hasRun = false;
+        turnLeft(100, 700);
+        updateDir(-1);
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "a";
+        response["error"] = nullptr;
+    } else if (strcmp(command, "d") == 0) {
+        state = 0;
+        start = false;
+        hasRun = false;
+        turnRight(100, 700);
+        updateDir(1);
+        response["version"] = "1.0";
+        response["msg_id"] = msg_id;
+        response["type"] = "response";
+        response["status"] = "d";
         response["error"] = nullptr;
     }
 

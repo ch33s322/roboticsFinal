@@ -8,8 +8,8 @@ import os
 import queue
 import threading
 
-width = 40
-height = 40
+width = 20
+height = 20
 
 empty = " . "
 path = " * "
@@ -34,6 +34,10 @@ def updateRobotPos(x, y):
 def drawGrid():
     #clear()
     global robotX, robotY, empty, path, robot, width, height
+
+    print(robotX)
+    print(robotY)
+
     for row in range(height):
         
         line = ""
@@ -69,7 +73,7 @@ def JSONMessage(m):
     }
     return msg
 
-ROBOT_IP = "192.168.254.253"  #Arduino IP
+ROBOT_IP = "10.32.11.204"  #Arduino IP
 PORT = 4210
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -95,7 +99,7 @@ while running:
             running = False
             break
 
-        elif command in ["task1", "task2", "task3", "task4", "task5", "task6", "start", "stop"]:
+        elif command in ["task1", "task2", "task3", "task4", "task5", "task6", "start", "stop", "w", "s", "a", "d"]:
 
             if(command == "stop"):
                 visited.clear()
